@@ -12,6 +12,7 @@ public class CryptoCurrencyImpl implements ICryptoCurrency {
 
 	private static final Logger logger = LogManager.getRootLogger();
 	private static final BigDecimal NOT_INITIALIZED = new BigDecimal(-1);
+	private static final int DEF_ACCURACY = 5;
 	private final String name;
 	private final IDataProvider provider;
 
@@ -34,7 +35,7 @@ public class CryptoCurrencyImpl implements ICryptoCurrency {
 		try (IRecordsIterator p = provider.getRecordsIterator(name)) {
 			while (p.hasNext()) {
 				CryptoCurrRecord rec = p.next();
-				if (min.compareTo(rec.price) > 0)
+				if (min.compareTo(rec.price) > 0 || min == NOT_INITIALIZED)
 					min = rec.price;
 			}
 		}
@@ -86,8 +87,7 @@ public class CryptoCurrencyImpl implements ICryptoCurrency {
 		}
 
 		if (i == 0) return NOT_INITIALIZED;
-		return avg.divide(BigDecimal.valueOf(i), RoundingMode.UNNECESSARY)
-				.setScale(2, RoundingMode.CEILING);
+		return avg.divide(BigDecimal.valueOf(i), DEF_ACCURACY, RoundingMode.HALF_UP);
 	}
 
 	@Override
@@ -102,13 +102,12 @@ public class CryptoCurrencyImpl implements ICryptoCurrency {
 			return NOT_INITIALIZED;
 
 		BigDecimal norm = max.subtract(min);
-		return norm.divide(min, RoundingMode.UNNECESSARY)
-				.setScale(2, RoundingMode.CEILING);
+		return norm.divide(min, DEF_ACCURACY, RoundingMode.HALF_UP);
 	}
 
 	public BigDecimal devFromAvg() {
 
-		BigDecimal avg = avg(new Date(0), new Date(Integer.MAX_VALUE));
+		BigDecimal avg = avg(new Date(0), new Date(Long.MAX_VALUE));
 		if (avg == NOT_INITIALIZED)
 			return NOT_INITIALIZED;
 
@@ -133,8 +132,7 @@ public class CryptoCurrencyImpl implements ICryptoCurrency {
 		}
 
 		if (i == 0) return NOT_INITIALIZED;
-		return dev.divide(BigDecimal.valueOf(i), RoundingMode.UNNECESSARY)
-				.setScale(2, RoundingMode.CEILING);
+		return dev.divide(BigDecimal.valueOf(i), DEF_ACCURACY, RoundingMode.HALF_UP);
 	}
 
 	public BigDecimal devFromNorm() {
@@ -164,7 +162,6 @@ public class CryptoCurrencyImpl implements ICryptoCurrency {
 		}
 
 		if (i == 0) return NOT_INITIALIZED;
-		return dev.divide(BigDecimal.valueOf(i), RoundingMode.UNNECESSARY)
-				.setScale(2, RoundingMode.CEILING);
+		return dev.divide(BigDecimal.valueOf(i), DEF_ACCURACY, RoundingMode.HALF_UP);
 	}
 }

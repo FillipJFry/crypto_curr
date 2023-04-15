@@ -8,7 +8,9 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,16 +21,20 @@ public class FileDataProvider implements IDataProvider {
 
 	public FileDataProvider(String dir) throws Exception {
 
+		this(Paths.get(dir));
+	}
+
+	public FileDataProvider(Path dirPath) throws Exception {
+
 		currencyFiles = new HashMap<>();
 
-		Path path = Paths.get(dir);
-		if (!Files.exists(path))
-			throw new Exception("the path does not exist: " + dir);
+		if (!Files.exists(dirPath))
+			throw new Exception("the path does not exist: " + dirPath);
 
 		Pattern fileNamePattern = Pattern.compile("([A-Z]+)_values\\.([a-z0-9]+)");
 		Matcher m = fileNamePattern.matcher("");
 
-		Files.walkFileTree(path, new SimpleFileVisitor<>() {
+		Files.walkFileTree(dirPath, new SimpleFileVisitor<>() {
 			@Override
 			public FileVisitResult visitFile(Path file,
 											 BasicFileAttributes attrs) throws IOException {
@@ -54,6 +60,12 @@ public class FileDataProvider implements IDataProvider {
 	public boolean currencyExists(String name) {
 
 		return currencyFiles.containsKey(name);
+	}
+
+	@Override
+	public List<String> getCurrenciesList() {
+
+		return new ArrayList<>(currencyFiles.keySet());
 	}
 
 	@Override

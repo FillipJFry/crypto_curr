@@ -16,4 +16,9 @@ public class ExtensionHandlersRegistry {
 
 		return registry.get(extension);
 	}
+
+	public static void reset() {
+
+		registry.clear();
+	}
 }

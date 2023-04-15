@@ -1,0 +1,2 @@
+{"symbol":"BTC","price":4681321,"timestamp":"2022-01-01T04:00"}
+{"symbol":"BTC","price":4697961,"timestamp":"2022-01-01T07:00"}
