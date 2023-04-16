@@ -1,4 +1,9 @@
-package com.goit.cryptocurr;
+package com.goit.cryptocurr.advisor;
+
+import com.goit.cryptocurr.IAdvisor;
+import com.goit.cryptocurr.ICryptoCurrency;
+import com.goit.cryptocurr.IDataProvider;
+import com.goit.cryptocurr.PriceConstants;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -7,7 +12,7 @@ import java.util.function.Function;
 public class Advisor implements IAdvisor {
 
 	private final IDataProvider provider;
-	private final HashMap<String, CryptoCurrencyImpl> currencies;
+	private final HashMap<String, ICryptoCurrencyEx> currencies;
 
 	public Advisor(IDataProvider provider) {
 
@@ -16,13 +21,13 @@ public class Advisor implements IAdvisor {
 
 		List<String> currNames = provider.getCurrenciesList();
 		for (String name : currNames)
-			currencies.put(name, new CryptoCurrencyImpl(name, provider));
+			currencies.put(name, CryptoCurrFactory.create(name, provider));
 	}
 
 	@Override
 	public Optional<ICryptoCurrency> pickByName(String name) {
 
-		CryptoCurrencyImpl currency = currencies.get(name);
+		ICryptoCurrencyEx currency = currencies.get(name);
 		if (currency == null) {
 			assert (!provider.currencyExists(name));
 			return Optional.empty();
@@ -40,36 +45,45 @@ public class Advisor implements IAdvisor {
 	@Override
 	public Optional<ICryptoCurrency> pickByMaxPrice() {
 
-		return pick(CryptoCurrencyImpl::max, new PriceRevComparator());
+		return pick(ICryptoCurrency::max, new PriceRevComparator());
 	}
 
 	@Override
 	public Optional<ICryptoCurrency> pickClosestToAvg() {
 
-		return pick(CryptoCurrencyImpl::devFromAvg, new PriceComparator());
+		return pick(ICryptoCurrencyEx::devFromAvg, new PriceComparator());
 	}
 
 	@Override
 	public Optional<ICryptoCurrency> pickClosestToNorm() {
 
-		return pick(CryptoCurrencyImpl::devFromNorm, new PriceComparator());
+		return pick(ICryptoCurrencyEx::devFromNorm, new PriceComparator());
 	}
 
-	private Optional<ICryptoCurrency> pick(Function<CryptoCurrencyImpl, BigDecimal> operation,
+	private Optional<ICryptoCurrency> pick(Function<ICryptoCurrencyEx, BigDecimal> operation,
 										   Comparator<BigDecimal> comparator) {
 
-		Iterator<CryptoCurrencyImpl> p = currencies.values().iterator();
-		if (!p.hasNext())
-			return Optional.empty();
+		Iterator<ICryptoCurrencyEx> p = currencies.values().iterator();
+		ICryptoCurrencyEx curr = null;
+		BigDecimal currValue = null;
+		boolean priceIsNull = true;
+		while (priceIsNull && p.hasNext()) {
 
-		CryptoCurrencyImpl curr = p.next();
+			curr = p.next();
+			currValue = operation.apply(curr);
+			priceIsNull = currValue.equals(PriceConstants.NULL_PRICE);
+		}
+		if (priceIsNull) return Optional.empty();
+
 		while (p.hasNext()) {
-			CryptoCurrencyImpl item = p.next();
+			ICryptoCurrencyEx item = p.next();
 			BigDecimal newValue = operation.apply(item);
-			BigDecimal currValue = operation.apply(curr);
 
-			if (comparator.compare(newValue, currValue) < 0)
+			priceIsNull = newValue.equals(PriceConstants.NULL_PRICE);
+			if (!priceIsNull && comparator.compare(newValue, currValue) < 0) {
 				curr = item;
+				currValue = newValue;
+			}
 		}
 		return Optional.of(curr);
 	}

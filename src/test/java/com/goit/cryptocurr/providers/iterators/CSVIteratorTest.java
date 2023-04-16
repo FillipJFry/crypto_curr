@@ -1,4 +1,4 @@
-package com.goit.cryptocurr.providers.ext_handlers;
+package com.goit.cryptocurr.providers.iterators;
 
 import com.goit.cryptocurr.CryptoCurrRecord;
 import com.goit.cryptocurr.IRecordsIterator;
@@ -9,19 +9,17 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class JSONHandlerTest {
+class CSVIteratorTest {
 
 	private static String testDataPath;
 
 	@BeforeAll
 	static void init() {
 
-		URL url = JSONHandlerTest.class.getResource("/");
+		URL url = CSVIteratorTest.class.getResource("/");
 		assert url != null;
 
 		testDataPath = url.getPath();
@@ -30,21 +28,19 @@ class JSONHandlerTest {
 	@Test
 	void correctFileOfTwoRecords() {
 
-		Path path = Paths.get(testDataPath, "BTC_values.txt");
-		DateFormat dtFormat = new SimpleDateFormat("yy-MM-dd hh:mm");
-
-		try (IRecordsIterator p = new JSONHandler(path)) {
+		Path path = Paths.get(testDataPath, "DOGE_values.csv");
+		try (IRecordsIterator p = new CSVIterator(path)) {
 			assertTrue(p.hasNext());
 			CryptoCurrRecord rec = p.next();
-			assertEquals("BTC", rec.name);
-			assertEquals(new BigDecimal(4681321), rec.price);
-			assertEquals(dtFormat.parse("2022-01-01 04:00"), rec.date);
+			assertEquals("DOGE", rec.name);
+			assertEquals(new BigDecimal("0.1702"), rec.price);
+			assertEquals(1641013200000L, rec.date.getTime());
 
 			assertTrue(p.hasNext());
 			rec = p.next();
-			assertEquals("BTC", rec.name);
-			assertEquals(new BigDecimal(4697961), rec.price);
-			assertEquals(dtFormat.parse("2022-01-01 07:00"), rec.date);
+			assertEquals("DOGE", rec.name);
+			assertEquals(new BigDecimal("0.1722"), rec.price);
+			assertEquals(1641074400000L, rec.date.getTime());
 
 			assertFalse(p.hasNext());
 		}
@@ -56,11 +52,16 @@ class JSONHandlerTest {
 	}
 
 	@Test
-	void emptyFile() {
+	void emptyFiles() {
 
 		try {
-			Path path = Paths.get(testDataPath, "ETH_values.txt");
-			try (IRecordsIterator p = new JSONHandler(path)) {
+			Path path = Paths.get(testDataPath, "LTC_values.csv");
+			try (IRecordsIterator p = new CSVIterator(path)) {
+				assertFalse(p.hasNext());
+			}
+
+			path = Paths.get(testDataPath, "XRP_values.csv");
+			try (IRecordsIterator p = new CSVIterator(path)) {
 				assertFalse(p.hasNext());
 			}
 		}

@@ -1,5 +1,6 @@
 package com.goit.cryptocurr.providers;
 
+import com.goit.cryptocurr.CryptoCurrRecord;
 import com.goit.cryptocurr.IDataProvider;
 import com.goit.cryptocurr.IRecordsIterator;
 import org.apache.logging.log4j.LogManager;
@@ -8,16 +9,17 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class FileDataProvider implements IDataProvider {
 
 	private static final Logger logger = LogManager.getRootLogger();
-	private final HashMap<String, Pair> currencyFiles;
+	private final HashMap<String, FileItem> currencyFiles;
+	private final long filesTotalSize;
 
 	public FileDataProvider(String dir) throws Exception {
 
@@ -47,13 +49,18 @@ public class FileDataProvider implements IDataProvider {
 					IExtensionHandlerFactory factory = ExtensionHandlersRegistry.getFactory(ext);
 
 					if (factory != null)
-						currencyFiles.put(currency, new Pair(file, factory));
+						currencyFiles.put(currency, new FileItem(file, attrs.size(), factory));
 					else
 						logger.error("a handler for the extension: ." + ext + " is not registered");
 				}
 				return FileVisitResult.CONTINUE;
 			}
 		});
+
+		Optional<Long> size = currencyFiles.values().stream()
+				.map(item -> item.size)
+				.reduce(Long::sum);
+		filesTotalSize = size.orElse(0L);
 	}
 
 	@Override
@@ -72,18 +79,34 @@ public class FileDataProvider implements IDataProvider {
 	public IRecordsIterator getRecordsIterator(String name) throws IOException {
 
 		assert currencyFiles.containsKey(name);
-		Pair p = currencyFiles.get(name);
+		FileItem p = currencyFiles.get(name);
 		return p.factory.create(p.path);
 	}
 
-	private static final class Pair {
+	@Override
+	public Stream<CryptoCurrRecord> getRecordsStream(String name) throws Exception {
+
+		return StreamSupport.stream(Spliterators
+							.spliteratorUnknownSize(getRecordsIterator(name),
+													Spliterator.NONNULL), false);
+	}
+
+	@Override
+	public long getDataTotalSize() {
+
+		return filesTotalSize;
+	}
+
+	private static final class FileItem {
 
 		Path path;
+		long size;
 		IExtensionHandlerFactory factory;
 
-		Pair(Path path, IExtensionHandlerFactory factory) {
+		FileItem(Path path, long size, IExtensionHandlerFactory factory) {
 
 			this.path = path;
+			this.size = size;
 			this.factory = factory;
 		}
 	}

@@ -1,9 +1,10 @@
-package com.goit.cryptocurr;
+package com.goit.cryptocurr.advisor;
 
+import com.goit.cryptocurr.ICryptoCurrency;
 import com.goit.cryptocurr.providers.ExtensionHandlersRegistry;
 import com.goit.cryptocurr.providers.FileDataProvider;
-import com.goit.cryptocurr.providers.ext_handlers.CSVHandler;
-import com.goit.cryptocurr.providers.ext_handlers.JSONHandler;
+import com.goit.cryptocurr.providers.iterators.CSVIterator;
+import com.goit.cryptocurr.providers.iterators.JSONIterator;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.net.URL;
+import java.util.Date;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,8 +24,8 @@ class AdvisorTest {
 	@BeforeAll
 	static void initRegistry() {
 
-		ExtensionHandlersRegistry.add("csv", new CSVHandler.Factory());
-		ExtensionHandlersRegistry.add("txt", new JSONHandler.Factory());
+		ExtensionHandlersRegistry.add("csv", new CSVIterator.Factory());
+		ExtensionHandlersRegistry.add("txt", new JSONIterator.Factory());
 	}
 
 	@BeforeEach
@@ -69,7 +71,6 @@ class AdvisorTest {
 		catch (Exception e) {
 
 			assertNull(e);
-			System.err.println(e.getMessage());
 		}
 	}
 
@@ -80,21 +81,43 @@ class AdvisorTest {
 			Optional<ICryptoCurrency> maxCurr = advisor.pickByMaxPrice();
 			assertFalse(maxCurr.isEmpty());
 			assertEquals("BTC", maxCurr.get().getName());
-			assertEquals(new BigDecimal(3327658), maxCurr.get().min());
+			assertEquals(new BigDecimal(4772266), maxCurr.get().max());
 		}
 		catch (Exception e) {
 
 			assertNull(e);
-			System.err.println(e.getMessage());
 		}
 	}
 
 	@Test
 	void pickClosestToAvg() {
+
+		try {
+			Optional<ICryptoCurrency> avgCurr = advisor.pickClosestToAvg();
+			assertFalse(avgCurr.isEmpty());
+			assertEquals("DOGE", avgCurr.get().getName());
+			assertEquals(new BigDecimal("0.15316"),
+						avgCurr.get().avg(new Date(0), new Date(Long.MAX_VALUE)));
+		}
+		catch (Exception e) {
+
+			assertNull(e);
+		}
 	}
 
 	@Test
 	void pickClosestToNorm() {
+
+		try {
+			Optional<ICryptoCurrency> normCurr = advisor.pickClosestToNorm();
+			assertFalse(normCurr.isEmpty());
+			assertEquals("XRP", normCurr.get().getName());
+			assertEquals(new BigDecimal("0.50605"), normCurr.get().norm());
+		}
+		catch (Exception e) {
+
+			assertNull(e);
+		}
 	}
 
 	@AfterAll

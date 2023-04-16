@@ -1,8 +1,9 @@
-package com.goit.cryptocurr.providers.ext_handlers;
+package com.goit.cryptocurr.providers.iterators;
 
 import com.goit.cryptocurr.CryptoCurrRecord;
 import com.goit.cryptocurr.IRecordsIterator;
 import com.goit.cryptocurr.providers.IExtensionHandlerFactory;
+import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -11,29 +12,23 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.function.Consumer;
 
-public class CSVHandler implements IRecordsIterator {
+public class JSONIterator implements IRecordsIterator {
 
 	private static final Logger logger = LogManager.getRootLogger();
 	private final BufferedReader reader;
+	private final Gson gson;
+	private final DateFormat dtFormat;
 
-	public CSVHandler(Path path) throws IOException {
+	public JSONIterator(Path path) throws IOException {
 
 		reader = new BufferedReader(new FileReader(path.toString()));
-		if (reader.ready()) {
-			String header = reader.readLine();
-			String[] fieldNames = header.split(",");
-
-			logger.info("the csv-file: " + path +
-						", fields: " + Arrays.toString(fieldNames));
-			assert fieldNames.length == 3;
-			assert fieldNames[0].equals("timestamp");
-			assert fieldNames[1].equals("symbol");
-			assert fieldNames[2].equals("price");
-		}
+		gson = new Gson();
+		dtFormat = new SimpleDateFormat("yy-MM-dd hh:mm");
 	}
 
 	@Override
@@ -44,7 +39,7 @@ public class CSVHandler implements IRecordsIterator {
 		}
 		catch (IOException e) {
 
-			logger.error("CSVHandler::hasNext(): " + e);
+			logger.error("JSONHandler::hasNext(): " + e);
 			return false;
 		}
 	}
@@ -54,18 +49,13 @@ public class CSVHandler implements IRecordsIterator {
 
 		try {
 			String line = reader.readLine();
-			String[] values = line.split(",");
-			if (values.length != 3) {
-				logger.error("CSVHandler::next(): wrong record: " + line);
-				return null;
-			}
-
-			return new CryptoCurrRecord(values[1], new BigDecimal(values[2]),
-										new Date(Long.parseLong(values[0])));
+			JSONRecord rec = gson.fromJson(line, JSONRecord.class);
+			Date dt = dtFormat.parse(rec.timestamp.replace('T', ' '));
+			return new CryptoCurrRecord(rec.symbol, rec.price, dt);
 		}
 		catch (Exception e) {
 
-			logger.error("CSVHandler::next(): " + e);
+			logger.error("JSONHandler::next(): " + e);
 			return null;
 		}
 	}
@@ -73,7 +63,7 @@ public class CSVHandler implements IRecordsIterator {
 	@Override
 	public void remove() {
 
-		throw new UnsupportedOperationException("CSVHandler doesn't support remove()");
+		throw new UnsupportedOperationException("JSONHandler doesn't support remove()");
 	}
 
 	@Override
@@ -94,7 +84,14 @@ public class CSVHandler implements IRecordsIterator {
 		@Override
 		public IRecordsIterator create(Path path) throws IOException {
 
-			return new CSVHandler(path);
+			return new JSONIterator(path);
 		}
+	}
+
+	private static class JSONRecord {
+
+		String symbol;
+		BigDecimal price;
+		String timestamp;
 	}
 }

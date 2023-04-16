@@ -1,5 +1,9 @@
-package com.goit.cryptocurr;
+package com.goit.cryptocurr.advisor;
 
+import com.goit.cryptocurr.CryptoCurrRecord;
+import com.goit.cryptocurr.IDataProvider;
+import com.goit.cryptocurr.IRecordsIterator;
+import com.goit.cryptocurr.PriceConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -8,15 +12,13 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
 
-public class CryptoCurrencyImpl implements ICryptoCurrency {
+public class CryptoCurrWithIterator implements ICryptoCurrencyEx {
 
 	private static final Logger logger = LogManager.getRootLogger();
-	private static final BigDecimal NOT_INITIALIZED = new BigDecimal(-1);
-	private static final int DEF_ACCURACY = 5;
 	private final String name;
 	private final IDataProvider provider;
 
-	public CryptoCurrencyImpl(String name, IDataProvider provider) {
+	public CryptoCurrWithIterator(String name, IDataProvider provider) {
 
 		this.name = name;
 		this.provider = provider;
@@ -31,18 +33,18 @@ public class CryptoCurrencyImpl implements ICryptoCurrency {
 	@Override
 	public BigDecimal min() {
 
-		BigDecimal min = NOT_INITIALIZED;
+		BigDecimal min = PriceConstants.NULL_PRICE;
 		try (IRecordsIterator p = provider.getRecordsIterator(name)) {
 			while (p.hasNext()) {
 				CryptoCurrRecord rec = p.next();
-				if (min.compareTo(rec.price) > 0 || min == NOT_INITIALIZED)
+				if (min.compareTo(rec.price) > 0 || min.equals(PriceConstants.NULL_PRICE))
 					min = rec.price;
 			}
 		}
 		catch (IOException e) {
 
-			logger.error("CryptoCurrency::min(): " + e);
-			return NOT_INITIALIZED;
+			logger.error("CryptoCurrWithIterator::min(): " + e);
+			return PriceConstants.NULL_PRICE;
 		}
 		return min;
 	}
@@ -50,7 +52,7 @@ public class CryptoCurrencyImpl implements ICryptoCurrency {
 	@Override
 	public BigDecimal max() {
 
-		BigDecimal max = NOT_INITIALIZED;
+		BigDecimal max = PriceConstants.NULL_PRICE;
 		try (IRecordsIterator p = provider.getRecordsIterator(name)) {
 			while (p.hasNext()) {
 				CryptoCurrRecord rec = p.next();
@@ -60,8 +62,8 @@ public class CryptoCurrencyImpl implements ICryptoCurrency {
 		}
 		catch (IOException e) {
 
-			logger.error("CryptoCurrency::max(): " + e);
-			return NOT_INITIALIZED;
+			logger.error("CryptoCurrWithIterator::max(): " + e);
+			return PriceConstants.NULL_PRICE;
 		}
 		return max;
 	}
@@ -82,64 +84,48 @@ public class CryptoCurrencyImpl implements ICryptoCurrency {
 		}
 		catch (IOException e) {
 
-			logger.error("CryptoCurrency::avg(): " + e);
-			return NOT_INITIALIZED;
+			logger.error("CryptoCurrWithIterator::avg(): " + e);
+			return PriceConstants.NULL_PRICE;
 		}
 
-		if (i == 0) return NOT_INITIALIZED;
-		return avg.divide(BigDecimal.valueOf(i), DEF_ACCURACY, RoundingMode.HALF_UP);
+		if (i == 0) return PriceConstants.NULL_PRICE;
+		return avg.divide(BigDecimal.valueOf(i),
+							PriceConstants.DEF_ACCURACY, RoundingMode.HALF_UP);
 	}
 
 	@Override
 	public BigDecimal norm() {
 
 		BigDecimal min = min();
-		if (min.equals(BigDecimal.ZERO) || min == NOT_INITIALIZED)
-			return NOT_INITIALIZED;
+		if (min.equals(BigDecimal.ZERO) || min.equals(PriceConstants.NULL_PRICE))
+			return PriceConstants.NULL_PRICE;
 
 		BigDecimal max = max();
-		if (max == NOT_INITIALIZED)
-			return NOT_INITIALIZED;
+		if (max.equals(PriceConstants.NULL_PRICE))
+			return PriceConstants.NULL_PRICE;
 
 		BigDecimal norm = max.subtract(min);
-		return norm.divide(min, DEF_ACCURACY, RoundingMode.HALF_UP);
+		return norm.divide(min, PriceConstants.DEF_ACCURACY, RoundingMode.HALF_UP);
 	}
 
+	@Override
 	public BigDecimal devFromAvg() {
 
 		BigDecimal avg = avg(new Date(0), new Date(Long.MAX_VALUE));
-		if (avg == NOT_INITIALIZED)
-			return NOT_INITIALIZED;
-
-		BigDecimal dev = BigDecimal.ZERO;
-		int i = 0;
-		try (IRecordsIterator p = provider.getRecordsIterator(name)) {
-			while (p.hasNext()) {
-				CryptoCurrRecord rec = p.next();
-
-				BigDecimal rec_dev = rec.price.subtract(avg);
-				if (rec_dev.compareTo(BigDecimal.ZERO) < 0)
-					rec_dev = rec_dev.negate();
-
-				dev = dev.add(rec_dev);
-				i++;
-			}
-		}
-		catch (IOException e) {
-
-			logger.error("CryptoCurrency::devFromAvg(): " + e);
-			return NOT_INITIALIZED;
-		}
-
-		if (i == 0) return NOT_INITIALIZED;
-		return dev.divide(BigDecimal.valueOf(i), DEF_ACCURACY, RoundingMode.HALF_UP);
+		return dev(avg, "devFromAvg");
 	}
 
+	@Override
 	public BigDecimal devFromNorm() {
 
 		BigDecimal norm = norm();
-		if (norm == NOT_INITIALIZED)
-			return NOT_INITIALIZED;
+		return dev(norm, "devFromNorm");
+	}
+
+	private BigDecimal dev(BigDecimal M, String exactMethodName) {
+
+		if (M.equals(PriceConstants.NULL_PRICE))
+			return PriceConstants.NULL_PRICE;
 
 		BigDecimal dev = BigDecimal.ZERO;
 		int i = 0;
@@ -147,7 +133,7 @@ public class CryptoCurrencyImpl implements ICryptoCurrency {
 			while (p.hasNext()) {
 				CryptoCurrRecord rec = p.next();
 
-				BigDecimal rec_dev = rec.price.subtract(norm);
+				BigDecimal rec_dev = rec.price.subtract(M);
 				if (rec_dev.compareTo(BigDecimal.ZERO) < 0)
 					rec_dev = rec_dev.negate();
 
@@ -157,11 +143,12 @@ public class CryptoCurrencyImpl implements ICryptoCurrency {
 		}
 		catch (IOException e) {
 
-			logger.error("CryptoCurrency::devFromNorm(): " + e);
-			return NOT_INITIALIZED;
+			logger.error("CryptoCurrWithIterator::" + exactMethodName + "(): " + e);
+			return PriceConstants.NULL_PRICE;
 		}
 
-		if (i == 0) return NOT_INITIALIZED;
-		return dev.divide(BigDecimal.valueOf(i), DEF_ACCURACY, RoundingMode.HALF_UP);
+		if (i == 0) return PriceConstants.NULL_PRICE;
+		return dev.divide(BigDecimal.valueOf(i),
+							PriceConstants.DEF_ACCURACY, RoundingMode.HALF_UP);
 	}
 }

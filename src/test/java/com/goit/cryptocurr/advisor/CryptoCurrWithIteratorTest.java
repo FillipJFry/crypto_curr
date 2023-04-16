@@ -1,9 +1,10 @@
-package com.goit.cryptocurr;
+package com.goit.cryptocurr.advisor;
 
+import com.goit.cryptocurr.ICryptoCurrency;
 import com.goit.cryptocurr.providers.ExtensionHandlersRegistry;
 import com.goit.cryptocurr.providers.FileDataProvider;
-import com.goit.cryptocurr.providers.ext_handlers.CSVHandler;
-import com.goit.cryptocurr.providers.ext_handlers.JSONHandler;
+import com.goit.cryptocurr.providers.iterators.CSVIterator;
+import com.goit.cryptocurr.providers.iterators.JSONIterator;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,15 +17,15 @@ import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class CryptoCurrencyImplTest {
+class CryptoCurrWithIteratorTest {
 
 	private FileDataProvider provider;
 
 	@BeforeAll
 	static void initRegistry() {
 
-		ExtensionHandlersRegistry.add("csv", new CSVHandler.Factory());
-		ExtensionHandlersRegistry.add("txt", new JSONHandler.Factory());
+		ExtensionHandlersRegistry.add("csv", new CSVIterator.Factory());
+		ExtensionHandlersRegistry.add("txt", new JSONIterator.Factory());
 	}
 
 	@BeforeEach
@@ -70,7 +71,7 @@ class CryptoCurrencyImplTest {
 	void avgOfDOGE() {
 
 		try {
-			CryptoCurrencyImpl curr = new CryptoCurrencyImpl("DOGE", provider);
+			CryptoCurrWithIterator curr = new CryptoCurrWithIterator("DOGE", provider);
 			assertEquals(new BigDecimal("0.15316"),
 							curr.avg(new Date(0), new Date(Long.MAX_VALUE)));
 		}
@@ -90,13 +91,13 @@ class CryptoCurrencyImplTest {
 	@Test
 	void devFromAvgOfDOGE() {
 
-		testStat("DOGE", new BigDecimal("0.01301"), CryptoCurrencyImpl::devFromAvg);
+		testStat("DOGE", new BigDecimal("0.01301"), CryptoCurrWithIterator::devFromAvg);
 	}
 
 	@Test
 	void devFromNormOfDOGE() {
 
-		testStat("DOGE", new BigDecimal("0.35149"), CryptoCurrencyImpl::devFromNorm);
+		testStat("DOGE", new BigDecimal("0.35149"), CryptoCurrWithIterator::devFromNorm);
 	}
 
 	@AfterAll
@@ -106,10 +107,10 @@ class CryptoCurrencyImplTest {
 	}
 
 	private void testStat(String name, BigDecimal expected,
-						  Function<CryptoCurrencyImpl, BigDecimal> predicate) {
+						  Function<CryptoCurrWithIterator, BigDecimal> predicate) {
 
 		try {
-			CryptoCurrencyImpl curr = new CryptoCurrencyImpl(name, provider);
+			CryptoCurrWithIterator curr = new CryptoCurrWithIterator(name, provider);
 			assertEquals(expected, predicate.apply(curr));
 		}
 		catch (Exception e) {
