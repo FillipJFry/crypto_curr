@@ -1,4 +1,4 @@
-package com.goit.cryptocurr.advisor;
+package com.goit.cryptocurr.currencies;
 
 import com.goit.cryptocurr.ICryptoCurrency;
 

@@ -1,13 +1,6 @@
-package com.goit.cryptocurr.advisor;
+package com.goit.cryptocurr;
 
-import com.goit.cryptocurr.ICryptoCurrency;
-import com.goit.cryptocurr.ResourcesHelper;
-import com.goit.cryptocurr.providers.ExtensionHandlersRegistry;
 import com.goit.cryptocurr.providers.FileDataProvider;
-import com.goit.cryptocurr.providers.iterators.CSVIterator;
-import com.goit.cryptocurr.providers.iterators.JSONIterator;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,13 +13,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class AdvisorTest {
 
 	private Advisor advisor;
-
-	@BeforeAll
-	static void initRegistry() {
-
-		ExtensionHandlersRegistry.add("csv", new CSVIterator.Factory());
-		ExtensionHandlersRegistry.add("txt", new JSONIterator.Factory());
-	}
 
 	@BeforeEach
 	void init() {
@@ -114,11 +100,5 @@ class AdvisorTest {
 
 			assertNull(e);
 		}
-	}
-
-	@AfterAll
-	static void resetRegistry() {
-
-		ExtensionHandlersRegistry.reset();
 	}
 }

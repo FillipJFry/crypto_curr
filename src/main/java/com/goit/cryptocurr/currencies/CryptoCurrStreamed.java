@@ -1,4 +1,4 @@
-package com.goit.cryptocurr.advisor;
+package com.goit.cryptocurr.currencies;
 
 import com.goit.cryptocurr.CryptoCurrRecord;
 import com.goit.cryptocurr.IDataProvider;
@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 public class CryptoCurrStreamed implements ICryptoCurrencyEx {
@@ -34,60 +33,56 @@ public class CryptoCurrStreamed implements ICryptoCurrencyEx {
 	@Override
 	public BigDecimal min() {
 
-		Optional<BigDecimal> min;
 		try (Stream<CryptoCurrRecord> stream = provider.getRecordsStream(name)) {
 
-			min = stream.map(rec -> rec.price).min(BigDecimal::compareTo);
+			return stream.map(rec -> rec.price)
+					.min(BigDecimal::compareTo)
+					.orElse(PriceConstants.NULL_PRICE);
 		}
 		catch (Exception e) {
 
 			logger.error("CryptoCurrStreamed::min(): " + e);
 			return PriceConstants.NULL_PRICE;
 		}
-		return min.orElse(PriceConstants.NULL_PRICE);
 	}
 
 	@Override
 	public BigDecimal max() {
 
-		Optional<BigDecimal> max;
 		try (Stream<CryptoCurrRecord> stream = provider.getRecordsStream(name)) {
 
-			max = stream.map(rec -> rec.price).max(BigDecimal::compareTo);
+			return stream.map(rec -> rec.price)
+					.max(BigDecimal::compareTo)
+					.orElse(PriceConstants.NULL_PRICE);
 		}
 		catch (Exception e) {
 
 			logger.error("CryptoCurrStreamed::max(): " + e);
 			return PriceConstants.NULL_PRICE;
 		}
-		return max.orElse(PriceConstants.NULL_PRICE);
 	}
 
 	@Override
 	public BigDecimal avg(Date start, Date end) {
 
-		Optional<Pair> r;
 		try (Stream<CryptoCurrRecord> stream = provider.getRecordsStream(name)) {
 
 			Stream<CryptoCurrRecord> filtered = stream.filter(rec ->
 					rec.date.compareTo(start) >= 0 && rec.date.compareTo(end) <= 0);
 
-			r = Streams.zip(filtered, Stream.iterate(1, i -> i + 1),
-						(rec, i) -> new Pair(i, rec.price))
-						.reduce(Pair::add);
+			return Streams.zip(filtered, Stream.iterate(1, i -> i + 1),
+								(rec, i) -> new Pair(i, rec.price))
+						.reduce(Pair::add)
+						.map(r -> r.price.divide(BigDecimal.valueOf(r.index),
+												PriceConstants.DEF_ACCURACY,
+												RoundingMode.HALF_UP))
+						.orElse(PriceConstants.NULL_PRICE);
 		}
 		catch (Exception e) {
 
 			logger.error("CryptoCurrStreamed::avg(): " + e);
 			return PriceConstants.NULL_PRICE;
 		}
-		if (r.isEmpty()) return PriceConstants.NULL_PRICE;
-
-		BigDecimal avg = r.get().price;
-		int count = r.get().index;
-
-		return avg.divide(BigDecimal.valueOf(count),
-							PriceConstants.DEF_ACCURACY, RoundingMode.HALF_UP);
 	}
 
 	@Override
@@ -121,26 +116,22 @@ public class CryptoCurrStreamed implements ICryptoCurrencyEx {
 
 	private BigDecimal dev(BigDecimal M, String exactMethodName) {
 
-		Optional<Pair> r;
 		try (Stream<CryptoCurrRecord> stream = provider.getRecordsStream(name)) {
 
-			r = Streams.zip(stream, Stream.iterate(1, i -> i + 1),
+			return Streams.zip(stream, Stream.iterate(1, i -> i + 1),
 							(rec, i) -> new Pair(i, rec.price))
 					.map(pair -> pair.diffByAbs(M))
-					.reduce(Pair::add);
+					.reduce(Pair::add)
+					.map(r -> r.price.divide(BigDecimal.valueOf(r.index),
+											PriceConstants.DEF_ACCURACY,
+											RoundingMode.HALF_UP))
+					.orElse(PriceConstants.NULL_PRICE);
 		}
 		catch (Exception e) {
 
 			logger.error("CryptoCurrStreamed::" + exactMethodName + "(): " + e);
 			return PriceConstants.NULL_PRICE;
 		}
-		if (r.isEmpty()) return PriceConstants.NULL_PRICE;
-
-		BigDecimal dev = r.get().price;
-		int count = r.get().index;
-
-		return dev.divide(BigDecimal.valueOf(count),
-							PriceConstants.DEF_ACCURACY, RoundingMode.HALF_UP);
 	}
 
 	private static final class Pair {

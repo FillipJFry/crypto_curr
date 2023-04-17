@@ -17,7 +17,7 @@ public final class ResourcesHelper {
 
 	public static Path getResourcesRoot() {
 
-		return getResourcesRoot(IAdvisor.class, "/prices");
+		return getResourcesRoot(Advisor.class, "/prices");
 	}
 
 	private static <T> Path getResourcesRoot(Class<T> cl, String resBasicPath) {

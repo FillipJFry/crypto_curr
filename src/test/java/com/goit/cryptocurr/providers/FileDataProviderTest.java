@@ -4,7 +4,6 @@ import com.goit.cryptocurr.IRecordsIterator;
 import com.goit.cryptocurr.ResourcesHelper;
 import com.goit.cryptocurr.providers.iterators.CSVIterator;
 import com.goit.cryptocurr.providers.iterators.JSONIterator;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -20,8 +19,6 @@ class FileDataProviderTest {
 	@BeforeAll
 	static void init() {
 
-		ExtensionHandlersRegistry.add("csv", new CSVIterator.Factory());
-		ExtensionHandlersRegistry.add("txt", new JSONIterator.Factory());
 		URL url = FileDataProviderTest.class.getResource("/");
 		assert url != null;
 
@@ -89,12 +86,6 @@ class FileDataProviderTest {
 	void recordsIteratorForETHisJSON() {
 
 		testRecordsIteratorIsJSON("ETH");
-	}
-
-	@AfterAll
-	static void resetRegistry() {
-
-		ExtensionHandlersRegistry.reset();
 	}
 
 	private void testRecordsIteratorIsCSV(String currency) {

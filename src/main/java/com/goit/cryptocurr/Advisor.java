@@ -1,15 +1,13 @@
-package com.goit.cryptocurr.advisor;
+package com.goit.cryptocurr;
 
-import com.goit.cryptocurr.IAdvisor;
-import com.goit.cryptocurr.ICryptoCurrency;
-import com.goit.cryptocurr.IDataProvider;
-import com.goit.cryptocurr.PriceConstants;
+import com.goit.cryptocurr.currencies.CryptoCurrFactory;
+import com.goit.cryptocurr.currencies.ICryptoCurrencyEx;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
 
-public class Advisor implements IAdvisor {
+public class Advisor {
 
 	private final IDataProvider provider;
 	private final HashMap<String, ICryptoCurrencyEx> currencies;
@@ -24,7 +22,6 @@ public class Advisor implements IAdvisor {
 			currencies.put(name, CryptoCurrFactory.create(name, provider));
 	}
 
-	@Override
 	public Optional<ICryptoCurrency> pickByName(String name) {
 
 		ICryptoCurrencyEx currency = currencies.get(name);
@@ -36,25 +33,21 @@ public class Advisor implements IAdvisor {
 		return Optional.of(currency);
 	}
 
-	@Override
 	public Optional<ICryptoCurrency> pickByMinPrice() {
 
 		return pick(ICryptoCurrency::min, new PriceComparator());
 	}
 
-	@Override
 	public Optional<ICryptoCurrency> pickByMaxPrice() {
 
 		return pick(ICryptoCurrency::max, new PriceRevComparator());
 	}
 
-	@Override
 	public Optional<ICryptoCurrency> pickClosestToAvg() {
 
 		return pick(ICryptoCurrencyEx::devFromAvg, new PriceComparator());
 	}
 
-	@Override
 	public Optional<ICryptoCurrency> pickClosestToNorm() {
 
 		return pick(ICryptoCurrencyEx::devFromNorm, new PriceComparator());
