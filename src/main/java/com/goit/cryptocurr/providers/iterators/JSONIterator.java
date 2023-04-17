@@ -61,12 +61,6 @@ public class JSONIterator implements IRecordsIterator {
 	}
 
 	@Override
-	public void remove() {
-
-		throw new UnsupportedOperationException("JSONHandler doesn't support remove()");
-	}
-
-	@Override
 	public void forEachRemaining(Consumer<? super CryptoCurrRecord> action) {
 
 		while (hasNext())

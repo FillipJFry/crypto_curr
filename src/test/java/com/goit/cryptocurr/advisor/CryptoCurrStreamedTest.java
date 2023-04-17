@@ -1,6 +1,7 @@
 package com.goit.cryptocurr.advisor;
 
 import com.goit.cryptocurr.ICryptoCurrency;
+import com.goit.cryptocurr.ResourcesHelper;
 import com.goit.cryptocurr.providers.ExtensionHandlersRegistry;
 import com.goit.cryptocurr.providers.FileDataProvider;
 import com.goit.cryptocurr.providers.iterators.CSVIterator;
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.net.URL;
 import java.util.Date;
 import java.util.function.Function;
 
@@ -31,15 +31,12 @@ class CryptoCurrStreamedTest {
 	@BeforeEach
 	void init() {
 
-		URL url = Advisor.class.getResource("/prices");
-		assert url != null;
-
 		try {
-			provider = new FileDataProvider(url.getPath());
+			provider = new FileDataProvider(ResourcesHelper.getResourcesRoot());
 		}
 		catch (Exception e) {
 
-			System.err.println(e.getMessage());
+			assertNull(e);
 		}
 	}
 
@@ -78,7 +75,6 @@ class CryptoCurrStreamedTest {
 		catch (Exception e) {
 
 			assertNull(e);
-			System.err.println(e.getMessage());
 		}
 	}
 
@@ -116,7 +112,6 @@ class CryptoCurrStreamedTest {
 		catch (Exception e) {
 
 			assertNull(e);
-			System.err.println(e.getMessage());
 		}
 	}
 }

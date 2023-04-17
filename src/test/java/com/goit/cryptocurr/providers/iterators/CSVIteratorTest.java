@@ -2,11 +2,11 @@ package com.goit.cryptocurr.providers.iterators;
 
 import com.goit.cryptocurr.CryptoCurrRecord;
 import com.goit.cryptocurr.IRecordsIterator;
+import com.goit.cryptocurr.ResourcesHelper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -14,21 +14,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CSVIteratorTest {
 
-	private static String testDataPath;
+	private static Path testDataPath;
 
 	@BeforeAll
 	static void init() {
 
-		URL url = CSVIteratorTest.class.getResource("/");
-		assert url != null;
-
-		testDataPath = url.getPath();
+		testDataPath = ResourcesHelper.getTestResourcesRoot();
 	}
 
 	@Test
 	void correctFileOfTwoRecords() {
 
-		Path path = Paths.get(testDataPath, "DOGE_values.csv");
+		Path path = testDataPath.resolve(Paths.get("DOGE_values.csv"));
 		try (IRecordsIterator p = new CSVIterator(path)) {
 			assertTrue(p.hasNext());
 			CryptoCurrRecord rec = p.next();
@@ -55,12 +52,12 @@ class CSVIteratorTest {
 	void emptyFiles() {
 
 		try {
-			Path path = Paths.get(testDataPath, "LTC_values.csv");
+			Path path = testDataPath.resolve(Paths.get("LTC_values.csv"));
 			try (IRecordsIterator p = new CSVIterator(path)) {
 				assertFalse(p.hasNext());
 			}
 
-			path = Paths.get(testDataPath, "XRP_values.csv");
+			path = testDataPath.resolve(Paths.get("XRP_values.csv"));
 			try (IRecordsIterator p = new CSVIterator(path)) {
 				assertFalse(p.hasNext());
 			}

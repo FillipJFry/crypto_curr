@@ -2,11 +2,11 @@ package com.goit.cryptocurr.providers.iterators;
 
 import com.goit.cryptocurr.CryptoCurrRecord;
 import com.goit.cryptocurr.IRecordsIterator;
+import com.goit.cryptocurr.ResourcesHelper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -16,21 +16,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JSONIteratorTest {
 
-	private static String testDataPath;
+	private static Path testDataPath = null;
 
 	@BeforeAll
 	static void init() {
 
-		URL url = JSONIteratorTest.class.getResource("/");
-		assert url != null;
-
-		testDataPath = url.getPath();
+		testDataPath = ResourcesHelper.getTestResourcesRoot();
 	}
 
 	@Test
 	void correctFileOfTwoRecords() {
 
-		Path path = Paths.get(testDataPath, "BTC_values.txt");
+		Path path = testDataPath.resolve(Paths.get("BTC_values.txt"));
 		DateFormat dtFormat = new SimpleDateFormat("yy-MM-dd hh:mm");
 
 		try (IRecordsIterator p = new JSONIterator(path)) {
@@ -59,7 +56,7 @@ class JSONIteratorTest {
 	void emptyFile() {
 
 		try {
-			Path path = Paths.get(testDataPath, "ETH_values.txt");
+			Path path = testDataPath.resolve(Paths.get("ETH_values.txt"));
 			try (IRecordsIterator p = new JSONIterator(path)) {
 				assertFalse(p.hasNext());
 			}

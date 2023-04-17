@@ -1,6 +1,7 @@
 package com.goit.cryptocurr.providers;
 
 import com.goit.cryptocurr.IRecordsIterator;
+import com.goit.cryptocurr.ResourcesHelper;
 import com.goit.cryptocurr.providers.iterators.CSVIterator;
 import com.goit.cryptocurr.providers.iterators.JSONIterator;
 import org.junit.jupiter.api.AfterAll;
@@ -8,12 +9,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.net.URL;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class FileDataProviderTest {
 
-	private static String testDataPath;
+	private static Path testDataPath;
 
 	@BeforeAll
 	static void init() {
@@ -23,7 +25,7 @@ class FileDataProviderTest {
 		URL url = FileDataProviderTest.class.getResource("/");
 		assert url != null;
 
-		testDataPath = url.getPath();
+		testDataPath = ResourcesHelper.getTestResourcesRoot();
 	}
 
 	@Test
