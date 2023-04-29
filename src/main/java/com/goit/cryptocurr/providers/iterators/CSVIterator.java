@@ -11,34 +11,30 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.function.Consumer;
 
 public class CSVIterator implements IRecordsIterator {
 
-	private static final Logger logger = LogManager.getRootLogger();
+	private static final Logger logger = LogManager.getRootLogger();	
 	private final BufferedReader reader;
-	private boolean headerIsOK;
+  private boolean headerIsOK;
 
-	public CSVIterator(Path path) throws IOException {
+  public CSVIterator(Path path) throws IOException {
 
-		reader = new BufferedReader(new FileReader(path.toString()));
-		headerIsOK = false;
-		if (reader.ready()) {
-			String header = reader.readLine();
-			String[] fieldNames = header.split(",");
-
-			headerIsOK = fieldNames.length == 3;
-			headerIsOK = headerIsOK && fieldNames[0].equals("timestamp");
-			headerIsOK = headerIsOK && fieldNames[1].equals("symbol");
-			headerIsOK = headerIsOK && fieldNames[2].equals("price");
-
-			if (!headerIsOK)
-				logger.error("the csv-file " + path + " has a wrong fields set: " +
-							 Arrays.toString(fieldNames));
-		}
-	}
+    reader = new BufferedReader(new FileReader(path.toString()));
+    headerIsOK = false;
+    if (reader.ready()) {
+      /*
+       * we can simplify it, but it's still a bad solution. what happens if the columns are swapped?
+       * we must to parse files based on the column name and not of its position
+       */
+      String header = reader.readLine();
+      headerIsOK = "timestamp,symbol,price".equals(header);
+      if (!headerIsOK)
+        logger.error("the csv-file " + path + " has a wrong fields set: " + header);
+    }
+  }
 
 	@Override
 	public boolean hasNext() {
@@ -61,19 +57,28 @@ public class CSVIterator implements IRecordsIterator {
 			String[] values = line.split(",");
 			if (values.length != 3) {
 				logger.error("CSVHandler::next(): wrong record: " + line);
+        /*
+        why null? 
+        here we must to throw an exception. 
+        if the file contains an error, then the analysis of the data will be erroneous. 
+        the client should know about it, and not receive a calculation with an error in the future
+        */
 				return null;
 			}
-
+      
 			return new CryptoCurrRecord(values[1], new BigDecimal(values[2]),
 										new Date(Long.parseLong(values[0])));
 		}
 		catch (Exception e) {
-
+      //its the same case
 			logger.error("CSVHandler::next(): " + e);
 			return null;
 		}
 	}
-
+  
+ /*
+  what is the reason of overriding the default interface method without changing the default behavior?
+  */
 	@Override
 	public void forEachRemaining(Consumer<? super CryptoCurrRecord> action) {
 
@@ -83,7 +88,7 @@ public class CSVIterator implements IRecordsIterator {
 
 	@Override
 	public void close() throws IOException {
-
+    
 		reader.close();
 	}
 

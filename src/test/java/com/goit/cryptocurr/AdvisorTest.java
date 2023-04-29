@@ -64,7 +64,7 @@ class AdvisorTest {
 			assertFalse(maxCurr.isEmpty());
 			assertEquals("BTC", maxCurr.get().getName());
 			assertEquals(new BigDecimal(4772266), maxCurr.get().max());
-		}
+}
 		catch (Exception e) {
 
 			assertNull(e);
