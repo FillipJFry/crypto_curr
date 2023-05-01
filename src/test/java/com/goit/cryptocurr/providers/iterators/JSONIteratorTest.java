@@ -33,15 +33,15 @@ class JSONIteratorTest {
 		try (IRecordsIterator p = new JSONIterator(path)) {
 			assertTrue(p.hasNext());
 			CryptoCurrRecord rec = p.next();
-			assertEquals("BTC", rec.name);
-			assertEquals(new BigDecimal(4681321), rec.price);
-			assertEquals(dtFormat.parse("2022-01-01 04:00"), rec.date);
+			assertEquals("BTC", rec.getName());
+			assertEquals(new BigDecimal(4681321), rec.getPrice());
+			assertEquals(dtFormat.parse("2022-01-01 04:00"), rec.getDate());
 
 			assertTrue(p.hasNext());
 			rec = p.next();
-			assertEquals("BTC", rec.name);
-			assertEquals(new BigDecimal(4697961), rec.price);
-			assertEquals(dtFormat.parse("2022-01-01 07:00"), rec.date);
+			assertEquals("BTC", rec.getName());
+			assertEquals(new BigDecimal(4697961), rec.getPrice());
+			assertEquals(dtFormat.parse("2022-01-01 07:00"), rec.getDate());
 
 			assertFalse(p.hasNext());
 		}

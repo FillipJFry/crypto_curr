@@ -20,16 +20,19 @@ import java.util.function.Consumer;
 public class JSONIterator implements IRecordsIterator {
 
 	private static final Logger logger = LogManager.getRootLogger();
-	private final BufferedReader reader;
-	private final Gson gson;
-	private final DateFormat dtFormat;
+	private final static Gson gson = new Gson();
+	private final static DateFormat dtFormat = new SimpleDateFormat("yy-MM-dd hh:mm");
+  private BufferedReader reader;
 
-	public JSONIterator(Path path) throws IOException {
-
-		reader = new BufferedReader(new FileReader(path.toString()));
-		gson = new Gson();
-		dtFormat = new SimpleDateFormat("yy-MM-dd hh:mm");
-	}
+  public JSONIterator(Path path) {
+      if (reader == null) {
+        try {
+          reader = new BufferedReader(new FileReader(path.toString()));
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+  }
 
 	@Override
 	public boolean hasNext() {
@@ -39,6 +42,13 @@ public class JSONIterator implements IRecordsIterator {
 		}
 		catch (IOException e) {
 
+      /*
+      this way of logging greatly complicates the code.
+      It's a bad idea to pass method names in method parameters and then output them to the logs.
+      instead of tis will be better to use another logger method for logging errors: logger.error("some custom comments ", e);
+      (coma instead of plus in this case we can see all stacktrace in console)
+      the same for all cases!
+      */
 			logger.error("JSONHandler::hasNext(): " + e);
 			return false;
 		}
@@ -50,16 +60,21 @@ public class JSONIterator implements IRecordsIterator {
 		try {
 			String line = reader.readLine();
 			JSONRecord rec = gson.fromJson(line, JSONRecord.class);
+      /*
+      in this case, it is necessary to configure the gson (with appropriate annotations over the model field)
+      instead of creating a 'JSONRecord' class that is needed only to parse the date manually
+      */
 			Date dt = dtFormat.parse(rec.timestamp.replace('T', ' '));
 			return new CryptoCurrRecord(rec.symbol, rec.price, dt);
 		}
 		catch (Exception e) {
-
+      //same problem as class CSVIterator
 			logger.error("JSONHandler::next(): " + e);
 			return null;
 		}
 	}
 
+  //same problem as class CSVIterator
 	@Override
 	public void forEachRemaining(Consumer<? super CryptoCurrRecord> action) {
 
@@ -69,7 +84,7 @@ public class JSONIterator implements IRecordsIterator {
 
 	@Override
 	public void close() throws IOException {
-
+    
 		reader.close();
 	}
 
@@ -82,6 +97,7 @@ public class JSONIterator implements IRecordsIterator {
 		}
 	}
 
+  //this class is redundant
 	private static class JSONRecord {
 
 		String symbol;

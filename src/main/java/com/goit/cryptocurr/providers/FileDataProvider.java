@@ -57,10 +57,10 @@ public class FileDataProvider implements IDataProvider {
 			}
 		});
 
-		Optional<Long> size = currencyFiles.values().stream()
+		filesTotalSize = currencyFiles.values().stream()
 				.map(item -> item.size)
-				.reduce(Long::sum);
-		filesTotalSize = size.orElse(0L);
+				.reduce(Long::sum)
+        .orElse(0L);
 	}
 
 	@Override
@@ -76,15 +76,18 @@ public class FileDataProvider implements IDataProvider {
 	}
 
 	@Override
-	public IRecordsIterator getRecordsIterator(String name) throws IOException {
-
-		assert currencyFiles.containsKey(name);
-		FileItem p = currencyFiles.get(name);
-		return p.factory.create(p.path);
-	}
+  public IRecordsIterator getRecordsIterator(String name) {
+    try {
+      assert currencyFiles.containsKey(name);
+      FileItem p = currencyFiles.get(name);
+      return p.factory.create(p.path);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
 	@Override
-	public Stream<CryptoCurrRecord> getRecordsStream(String name) throws Exception {
+	public Stream<CryptoCurrRecord> getRecordsStream(String name) {
 
 		return StreamSupport.stream(Spliterators
 							.spliteratorUnknownSize(getRecordsIterator(name),
@@ -98,13 +101,13 @@ public class FileDataProvider implements IDataProvider {
 	}
 
 	private static final class FileItem {
-
+    
 		Path path;
 		long size;
 		IExtensionHandlerFactory factory;
 
 		FileItem(Path path, long size, IExtensionHandlerFactory factory) {
-
+      
 			this.path = path;
 			this.size = size;
 			this.factory = factory;

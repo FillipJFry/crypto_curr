@@ -29,15 +29,15 @@ class CSVIteratorTest {
 		try (IRecordsIterator p = new CSVIterator(path)) {
 			assertTrue(p.hasNext());
 			CryptoCurrRecord rec = p.next();
-			assertEquals("DOGE", rec.name);
-			assertEquals(new BigDecimal("0.1702"), rec.price);
-			assertEquals(1641013200000L, rec.date.getTime());
+			assertEquals("DOGE", rec.getName());
+			assertEquals(new BigDecimal("0.1702"), rec.getPrice());
+			assertEquals(1641013200000L, rec.getDate().getTime());
 
 			assertTrue(p.hasNext());
 			rec = p.next();
-			assertEquals("DOGE", rec.name);
-			assertEquals(new BigDecimal("0.1722"), rec.price);
-			assertEquals(1641074400000L, rec.date.getTime());
+			assertEquals("DOGE", rec.getName());
+			assertEquals(new BigDecimal("0.1722"), rec.getPrice());
+			assertEquals(1641074400000L, rec.getDate().getTime());
 
 			assertFalse(p.hasNext());
 		}
